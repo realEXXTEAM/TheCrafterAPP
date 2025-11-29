@@ -3,29 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Block Blast Ultimate Color</title>
+    <title>Block Blast Ultimate (V10 Fix)</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
 
         :root {
             /* System Colors */
             --blue-bg-top: #2b65ff;
             --blue-bg-bot: #1034a6;
             --default-game-bg: #5d2a2c;
+            --current-game-bg: #5d2a2c;
+            
             --modal-bg: #a83e3e;
             --btn-green: #58cc02;
             --btn-green-shadow: #419603;
             --btn-red: #ff4757;
             --btn-red-shadow: #c0392b;
 
-            /* BLOCK COLORS (Vibrant) */
-            --c-red: #ff4757; 
-            --c-blue: #1e90ff; 
-            --c-green: #2ed573; 
-            --c-purple: #a55eea; 
-            --c-orange: #ffa502;
-            --c-cyan: #00d2d3;
-            --c-pink: #ff9ff3;
+            /* BLOCK COLORS */
+            --c-red: #ff4757; --c-blue: #1e90ff; --c-green: #2ed573; 
+            --c-purple: #a55eea; --c-orange: #ffa502; --c-cyan: #00d2d3; --c-pink: #ff9ff3;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -34,26 +31,58 @@
             margin: 0; padding: 0;
             font-family: 'Nunito', sans-serif;
             overflow: hidden;
-            background: var(--blue-bg-top);
-            background-size: cover; background-position: center;
+            background: #000;
             height: 100vh; width: 100vw;
             display: flex; justify-content: center; align-items: center;
-            transition: background 0.5s;
         }
 
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; align-items: center;
             transition: opacity 0.3s;
+            overflow: hidden; 
         }
         .screen.active { display: flex; }
 
-        /* LOBBY */
+        /* --- BACKGROUND PATTERNS (Z-Index Fixed) --- */
+        .scrolling-bg {
+            position: absolute; 
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            z-index: 1; /* Di atas warna background */
+            opacity: 0.15; 
+            pointer-events: none;
+            animation: bgScrollAnim 40s linear infinite;
+        }
+
+        /* MOTIF DEFINITIONS */
+        .pat-grid { 
+            background-image: linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px); 
+            background-size: 50px 50px; 
+        }
+        .pat-dots { 
+            background-image: radial-gradient(#ffffff 15%, transparent 15%), radial-gradient(#ffffff 15%, transparent 15%); 
+            background-position: 0 0, 30px 30px; 
+            background-size: 60px 60px; 
+        }
+        .pat-cross { 
+            background-image: linear-gradient(#ffffff 2px, transparent 2px), linear-gradient(90deg, #ffffff 2px, transparent 2px); 
+            background-size: 40px 40px; 
+            background-position: center; 
+            transform: rotate(45deg); 
+        }
+        .pat-none { background: none; }
+        
+        @keyframes bgScrollAnim { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+
+        /* --- LOBBY (LOCKED STYLE) --- */
         #lobby-screen {
             background: linear-gradient(180deg, var(--blue-bg-top) 0%, var(--blue-bg-bot) 100%);
             justify-content: center; padding-bottom: 50px;
-            transition: background 0.5s ease; /* Transisi halus untuk ganti warna */
+            z-index: 10;
         }
+
+        /* UI Elements */
+        .medal-badge, .logo-container, .daily-card, .menu-btn { z-index: 5; position: relative; }
 
         .medal-badge {
             position: absolute; top: 20px; right: 20px;
@@ -90,12 +119,17 @@
         .btn-adv { background: #ffaa00; box-shadow: 0 8px 0 #cc8800; }
         .btn-cls { background: #00d2be; box-shadow: 0 8px 0 #00a396; }
 
-        /* GAME SCREEN */
+        /* --- GAME SCREEN --- */
         #game-screen { 
-            background: var(--default-game-bg); 
+            background: var(--current-game-bg); 
             justify-content: center;
-            transition: background 0.5s ease; /* Transisi halus */
+            transition: background 0.5s ease;
+            z-index: 5;
         }
+        
+        /* Game UI Elements */
+        .game-header, .game-wrapper, .dock { z-index: 5; position: relative; }
+
         .game-header { position: absolute; top: 40px; width: 90%; max-width: 400px; display: flex; flex-direction: column; }
         .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .score-display { color: #f1c40f; font-family: 'Fredoka One'; font-size: 32px; text-shadow: 0 3px 0 rgba(0,0,0,0.3); }
@@ -112,13 +146,12 @@
         .game-container { width: 320px; height: 320px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; }
         .cell { background: rgba(0,0,0,0.3); border-radius: 4px; width: 100%; height: 100%; position: relative; }
         
-        /* BLOCK STYLING (VIBRANT) */
-        .block-element { 
-            position: absolute; width: 100%; height: 100%; border-radius: 4px; 
-            /* Default: Classic 3D Look */
-            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.4);
-        }
-        
+        .block-element { position: absolute; width: 100%; height: 100%; border-radius: 4px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.4); }
+        .dock { position: absolute; bottom: 50px; width: 340px; height: 100px; display: flex; justify-content: space-around; align-items: center; }
+        .dock.unavailable { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
+        .draggable-shape { position: absolute; z-index: 999; pointer-events: none; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.3)); transform: scale(1.1); }
+        .preview-active { opacity: 0.5; }
+
         /* SKINS */
         .skin-crystal .block-element { box-shadow: none; border: 2px solid rgba(255,255,255,0.8); opacity: 0.85; }
         .skin-pixel .block-element { border-radius: 0; box-shadow: inset 4px 4px 0 rgba(255,255,255,0.4), inset -4px -4px 0 rgba(0,0,0,0.3); }
@@ -127,82 +160,43 @@
         .skin-lego .block-element::after { content:''; position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; background: inherit; border-radius: 50%; box-shadow: 0 2px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); }
 
         /* NO SPACE OVERLAY */
-        .no-space-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 50; border-radius: 10px;
-        }
-        .ns-title {
-            color: #ff4757; font-family: 'Fredoka One'; font-size: 50px; margin-bottom: 20px;
-            text-shadow: 2px 2px 0 #fff, 0 0 20px #ff4757;
-            animation: pulse 1s infinite alternate;
-        }
-        .btn-retry-overlay {
-            background: #58cc02; color: white; border: none; padding: 15px 40px;
-            font-size: 24px; font-weight: 900; border-radius: 50px;
-            box-shadow: 0 5px 0 #419603, 0 0 20px rgba(88, 204, 2, 0.6);
-            cursor: pointer; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .no-space-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50; border-radius: 10px; }
+        .ns-title { color: #ff4757; font-family: 'Fredoka One'; font-size: 40px; margin-bottom: 10px; text-shadow: 2px 2px 0 #fff, 0 0 20px #ff4757; animation: pulse 1s infinite alternate; }
+        .final-score-label { color: white; font-size: 18px; font-weight: bold; opacity: 0.8; margin-bottom: 5px; }
+        .final-score-val { font-family: 'Fredoka One'; font-size: 60px; color: #f1c40f; text-shadow: 0 5px 0 #d35400; margin-bottom: 30px; }
+        .btn-retry-overlay { background: #58cc02; color: white; border: none; padding: 15px 40px; font-size: 24px; font-weight: 900; border-radius: 50px; box-shadow: 0 5px 0 #419603, 0 0 20px rgba(88, 204, 2, 0.6); cursor: pointer; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .btn-retry-overlay:active { transform: translateY(4px); box-shadow: none; }
         @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
 
-        .dock { position: absolute; bottom: 50px; width: 340px; height: 100px; display: flex; justify-content: space-around; align-items: center; }
-        .dock.unavailable { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
-        .draggable-shape { position: absolute; z-index: 999; pointer-events: none; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.3)); transform: scale(1.1); }
-        .preview-active { opacity: 0.5; }
-
         .cell.clearing { animation: poof 0.3s forwards; }
+        .cell.will-clear .block-element { background: #fff !important; box-shadow: 0 0 15px white; z-index: 10; transform: scale(1.05); transition: all 0.1s; animation: pulse-warn 0.3s infinite alternate; }
         @keyframes poof { 0% { transform: scale(1); background: white; } 100% { transform: scale(0); opacity: 0; } }
+        @keyframes pulse-warn { from { filter: brightness(1.2); } to { filter: brightness(2.0); } }
+        @keyframes blockAppearPop { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .block-element.appear-anim { animation: blockAppearPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-        .combo-popup {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            color: #f1c40f; font-family: 'Fredoka One'; font-size: 40px;
-            text-shadow: 0 4px 0 #c0392b, 0 0 20px rgba(255,255,0,0.5);
-            z-index: 100; pointer-events: none; animation: popText 1s ease-out forwards; white-space: nowrap;
-        }
-        @keyframes popText {
-            0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
-            100% { transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 0; }
-        }
+        .combo-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: #f1c40f; font-family: 'Fredoka One'; font-size: 40px; text-shadow: 0 4px 0 #c0392b, 0 0 20px rgba(255,255,0,0.5); z-index: 100; pointer-events: none; animation: popText 1s ease-out forwards; white-space: nowrap; }
+        @keyframes popText { 0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; } 100% { transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 0; } }
 
         /* MODALS */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 2000; display: none;
-            justify-content: center; align-items: center;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; display: none; justify-content: center; align-items: center; }
         .modal-overlay.show { display: flex; }
-        .settings-card {
-            background: var(--modal-bg); width: 85%; max-width: 320px;
-            border-radius: 20px; padding: 20px; box-shadow: 0 10px 0 #7c2626;
-            text-align: center; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-height: 80vh; overflow-y: auto;
-        }
+        .settings-card { background: var(--modal-bg); width: 85%; max-width: 320px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 0 #7c2626; text-align: center; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-height: 80vh; overflow-y: auto; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
         .settings-header { color: white; font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 20px; }
         .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 24px; font-weight: bold; cursor: pointer; opacity: 0.7; }
-
+        
         .toggles-row { display: flex; justify-content: space-around; margin-bottom: 25px; }
         .toggle-item { display: flex; flex-direction: column; align-items: center; color: white; font-size: 12px; font-weight: bold; opacity: 0.9; cursor: pointer; }
         .toggle-item.off { opacity: 0.4; } 
         .toggle-icon { width: 40px; height: 40px; margin-bottom: 5px; fill: white; }
 
-        .modal-btn {
-            background: var(--btn-green); color: white; border: none; padding: 15px; width: 100%;
-            border-radius: 12px; font-size: 18px; font-weight: 900; margin-bottom: 10px;
-            box-shadow: 0 6px 0 var(--btn-green-shadow); cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
+        .modal-btn { background: var(--btn-green); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 900; margin-bottom: 10px; box-shadow: 0 6px 0 var(--btn-green-shadow); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .modal-btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
+        .modal-btn.red { background: var(--btn-red); box-shadow: 0 6px 0 var(--btn-red-shadow); }
 
         /* CONFIRM BOX */
-        .confirm-box {
-            background: white; border-radius: 15px; padding: 20px; width: 80%; max-width: 300px;
-            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .confirm-box { background: white; border-radius: 15px; padding: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .confirm-title { color: #333; font-size: 20px; font-weight: 800; margin-bottom: 10px; }
         .confirm-msg { color: #666; font-size: 14px; margin-bottom: 20px; }
         .confirm-actions { display: flex; gap: 10px; }
@@ -211,40 +205,43 @@
         .btn-no { background: var(--btn-green); color: white; box-shadow: 0 4px 0 var(--btn-green-shadow); }
         .btn-yes:active, .btn-no:active { transform: translateY(2px); box-shadow: none; }
 
-        /* CUSTOM SETTINGS PANEL */
+        /* CUSTOM SETTINGS */
         #custom-panel { display: none; text-align: left; }
         .custom-option { margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
         .custom-label { color: white; font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
-        
-        /* Skin Grid */
         .skin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .skin-btn { 
-            padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; 
-            text-align: center; cursor: pointer; color: white; font-size: 12px; border: 2px solid transparent; 
-        }
+        .skin-btn { padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; text-align: center; cursor: pointer; color: white; font-size: 12px; border: 2px solid transparent; }
         .skin-btn.active { border-color: #58cc02; background: rgba(88, 204, 2, 0.2); font-weight: bold; }
-
-        /* BG Colors Grid */
         .bg-grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .bg-color-opt { width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); cursor: pointer; }
         .bg-color-opt.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        /* FIX PREVIEW BUTTONS: Renamed class to prevent background leak */
+        .pat-select-row { display: flex; gap: 10px; justify-content: center; }
+        .pat-btn { 
+            width: 60px; height: 60px; border-radius: 12px; border: 3px solid rgba(255,255,255,0.3); cursor: pointer; 
+            background-color: rgba(0,0,0,0.2); margin: 0 2px;
+        }
+        .pat-btn.active { border-color: #58cc02; transform: scale(1.1); background-color: rgba(88, 204, 2, 0.5); }
+
+        .pat-btn.pat-dots { background-image: radial-gradient(#fff 20%, transparent 20%); background-size: 12px 12px; background-position: center; }
+        .pat-btn.pat-grid { background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 15px 15px; background-position: center; }
+        .pat-btn.pat-cross { background: linear-gradient(45deg, transparent 48%, #fff 48%, #fff 52%, transparent 52%), linear-gradient(-45deg, transparent 48%, #fff 48%, #fff 52%, transparent 52%); background-size: 15px 15px; background-color: rgba(0,0,0,0.2); }
+        .pat-btn.pat-none { background: none; }
 
         /* ACH LIST */
-        .ach-item {
-            background: rgba(0,0,0,0.2); margin-bottom: 10px; padding: 10px;
-            border-radius: 10px; display: flex; align-items: center; gap: 10px;
-            text-align: left; opacity: 0.5;
-        }
+        .ach-item { background: rgba(0,0,0,0.2); margin-bottom: 10px; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; text-align: left; opacity: 0.5; }
         .ach-item.unlocked { opacity: 1; background: rgba(255,255,255,0.1); border: 1px solid gold; }
         .ach-icon { font-size: 24px; }
         .ach-info div:first-child { color: white; font-weight: bold; font-size: 14px; }
         .ach-info div:last-child { color: #ddd; font-size: 12px; }
-
     </style>
 </head>
 <body>
 
     <div id="lobby-screen" class="screen active">
+        <div class="scrolling-bg pat-grid"></div>
+
         <div class="medal-badge" onclick="openAchievements()">
             <svg class="medal-icon" viewBox="0 0 24 24" fill="#FFD700"><circle cx="12" cy="12" r="10" stroke="#E67E22" stroke-width="2"/><path d="M12 7l1.5 3h3l-2.5 2 1 3-3-2-3 2 1-3-2.5-2h3z" fill="white"/></svg>
             <div>Medal</div>
@@ -272,6 +269,8 @@
     </div>
 
     <div id="game-screen" class="screen">
+        <div class="scrolling-bg" id="bg-pattern-game"></div>
+
         <div class="game-header">
             <div class="header-top">
                 <div><div class="best-score">🏆 <span id="game-best">0</span></div></div>
@@ -289,6 +288,8 @@
             <div class="game-container" id="grid"></div>
             <div id="no-space-overlay" class="no-space-overlay">
                 <div class="ns-title">NO SPACE!</div>
+                <div class="final-score-label">Final Score</div>
+                <div class="final-score-val" id="final-score-anim">0</div>
                 <button class="btn-retry-overlay" onclick="tryRestart()">Coba Lagi</button>
             </div>
         </div>
@@ -315,23 +316,38 @@
                 </div>
                 <div class="btn-stack">
                     <button class="modal-btn" onclick="showCustomPanel()"><span></span> More Settings</button>
-                    <button class="modal-btn" onclick="goHome()"><span></span> Home</button>
+                    <button class="modal-btn" onclick="tryGoHome()"><span></span> Home</button>
                     <button class="modal-btn" onclick="tryRestart()"><span></span> Replay</button>
                 </div>
             </div>
 
             <div id="custom-panel">
                 <div class="custom-option">
-                    <span class="custom-label">Change Wallpaper Color</span>
+                    <span class="custom-label">Game Background Color</span>
                     <div class="bg-grid">
-                        <div class="bg-color-opt" style="background:#2b65ff" onclick="changeBg('#2b65ff', this)"></div>
-                        <div class="bg-color-opt" style="background:#1e272e" onclick="changeBg('#1e272e', this)"></div>
-                        <div class="bg-color-opt" style="background:#006266" onclick="changeBg('#006266', this)"></div>
-                        <div class="bg-color-opt" style="background:#5758BB" onclick="changeBg('#5758BB', this)"></div>
-                        <div class="bg-color-opt" style="background:#6F1E51" onclick="changeBg('#6F1E51', this)"></div>
-                        <div class="bg-color-opt" style="background:#EA2027" onclick="changeBg('#EA2027', this)"></div>
+                        <div class="bg-color-opt" style="background:#5d2a2c" onclick="changeGameBg('#5d2a2c', this)"></div>
+                        <div class="bg-color-opt" style="background:#2b65ff" onclick="changeGameBg('#2b65ff', this)"></div>
+                        <div class="bg-color-opt" style="background:#1e272e" onclick="changeGameBg('#1e272e', this)"></div>
+                        <div class="bg-color-opt" style="background:#006266" onclick="changeGameBg('#006266', this)"></div>
+                        <div class="bg-color-opt" style="background:#5758BB" onclick="changeGameBg('#5758BB', this)"></div>
+                        <div class="bg-color-opt" style="background:#EA2027" onclick="changeGameBg('#EA2027', this)"></div>
+                        <div class="bg-color-opt" style="background:#e67e22" onclick="changeGameBg('#e67e22', this)"></div>
+                        <div class="bg-color-opt" style="background:#e84393" onclick="changeGameBg('#e84393', this)"></div>
+                        <div class="bg-color-opt" style="background:#2d3436" onclick="changeGameBg('#2d3436', this)"></div>
+                        <div class="bg-color-opt" style="background:#6ab04c" onclick="changeGameBg('#6ab04c', this)"></div>
                     </div>
                 </div>
+
+                <div class="custom-option">
+                    <span class="custom-label">Background Motif</span>
+                    <div class="pat-select-row">
+                        <div class="pat-btn pat-dots" onclick="setPattern('pat-dots', this)"></div>
+                        <div class="pat-btn pat-grid active" onclick="setPattern('pat-grid', this)"></div>
+                        <div class="pat-btn pat-cross" onclick="setPattern('pat-cross', this)"></div>
+                        <div class="pat-btn pat-none" onclick="setPattern('pat-none', this)"></div>
+                    </div>
+                </div>
+
                 <div class="custom-option">
                     <span class="custom-label">Block Skin</span>
                     <div class="skin-grid">
@@ -343,6 +359,7 @@
                         <div class="skin-btn" onclick="setSkin('lego', this)">Lego</div>
                     </div>
                 </div>
+                
                 <button class="modal-btn" onclick="hideCustomPanel()">Back</button>
             </div>
         </div>
@@ -350,11 +367,11 @@
 
     <div class="modal-overlay" id="confirm-modal">
         <div class="confirm-box">
-            <div class="confirm-title">Restart Game?</div>
-            <div class="confirm-msg" id="confirm-text">Your progress will be lost.</div>
+            <div class="confirm-title">Confirmation</div>
+            <div class="confirm-msg" id="confirm-text">...</div>
             <div class="confirm-actions">
-                <button class="btn-confirm btn-yes" id="btn-confirm-yes">Restart</button>
-                <button class="btn-confirm btn-no" onclick="document.getElementById('confirm-modal').classList.remove('show')">Cancel</button>
+                <button class="btn-confirm btn-yes" id="btn-confirm-yes">Yes</button>
+                <button class="btn-confirm btn-no" onclick="document.getElementById('confirm-modal').classList.remove('show')">No</button>
             </div>
         </div>
     </div>
@@ -370,7 +387,7 @@
     <script>
         const audioSys = {
             ctx: new (window.AudioContext || window.webkitAudioContext)(),
-            sfxOn: true, bgmOn: true, vibOn: true, bgmOsc: null,
+            sfxOn: true, vibOn: true,
             init: function() { if(this.ctx.state==='suspended') this.ctx.resume(); },
             playTone: function(freq, type, dur, vol=0.1) {
                 if(!this.sfxOn) return;
@@ -380,30 +397,6 @@
                 g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+dur);
                 o.connect(g); g.connect(this.ctx.destination);
                 o.start(); o.stop(this.ctx.currentTime+dur);
-            },
-            playBGM: function() {
-                if(!this.bgmOn) return;
-                const melody = [261.63, 329.63, 392.00, 493.88]; let noteIdx = 0;
-                this.bgmInt = setInterval(() => {
-                    if(!this.bgmOn) return;
-                    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                    o.frequency.value = melody[noteIdx % melody.length]; o.type = 'triangle';
-                    g.gain.setValueAtTime(0.05, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.5);
-                    o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 1.5);
-                    if(noteIdx % 4 === 0) {
-                        const bass = this.ctx.createOscillator(); const bg = this.ctx.createGain();
-                        bass.frequency.value = 65.41; bass.type = 'sine';
-                        bg.gain.setValueAtTime(0.1, this.ctx.currentTime); bg.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 2);
-                        bass.connect(bg); bg.connect(this.ctx.destination); bass.start(); bass.stop(this.ctx.currentTime + 2);
-                    }
-                    noteIdx++;
-                }, 400);
-            },
-            stopBGM: function() { if(this.bgmInt) clearInterval(this.bgmInt); },
-            toggleBGM: function() {
-                this.bgmOn = !this.bgmOn;
-                document.getElementById('btn-bgm').classList.toggle('off', !this.bgmOn);
-                this.bgmOn ? this.playBGM() : this.stopBGM();
             },
             toggleSFX: function() {
                 this.sfxOn = !this.sfxOn;
@@ -424,13 +417,22 @@
         let currentXP=0, xpNeeded=level*100;
 
         const achievements = [
-            { id: 'lv5', title: 'Novice Adventurer', desc: 'Reach Level 5', check: () => level >= 5 },
-            { id: 'lv10', title: 'Expert Explorer', desc: 'Reach Level 10', check: () => level >= 10 },
-            { id: 'sc1000', title: 'High Scorer', desc: 'Score 1000 in one game', check: () => score >= 1000 },
-            { id: 'combo', title: 'Combo Master', desc: 'Clear 3 lines at once', check: (lines) => lines >= 3 }
+            { id: 'lv5', title: 'Novice', desc: 'Reach Level 5', check: () => level >= 5 },
+            { id: 'lv10', title: 'Explorer', desc: 'Reach Level 10', check: () => level >= 10 },
+            { id: 'lv25', title: 'Adventurer', desc: 'Reach Level 25', check: () => level >= 25 },
+            { id: 'lv50', title: 'Veteran', desc: 'Reach Level 50', check: () => level >= 50 },
+            { id: 'lv100', title: 'Master', desc: 'Reach Level 100', check: () => level >= 100 },
+            { id: 'lv200', title: 'Grandmaster', desc: 'Reach Level 200', check: () => level >= 200 },
+            { id: 'lv500', title: 'Hero', desc: 'Reach Level 500', check: () => level >= 500 },
+            { id: 'lv1000', title: 'THE LEGEND', desc: 'Reach Level 1000', check: () => level >= 1000 },
+            { id: 'sc1000', title: 'Rookie Score', desc: 'Score 1,000 points', check: () => score >= 1000 },
+            { id: 'sc5000', title: 'Pro Score', desc: 'Score 5,000 points', check: () => score >= 5000 },
+            { id: 'sc10000', title: 'Elite Score', desc: 'Score 10,000 points', check: () => score >= 10000 },
+            { id: 'sc50000', title: 'Godlike', desc: 'Score 50,000 points', check: () => score >= 50000 },
+            { id: 'combo3', title: 'Triple Threat', desc: 'Clear 3 lines at once', check: (lines) => lines === 3 },
+            { id: 'combo4', title: 'Quadrablaster', desc: 'Clear 4 lines at once', check: (lines) => lines >= 4 }
         ];
         
-        // Define Vibrant Colors Here explicitly for usage
         const COLORS = ['var(--c-red)', 'var(--c-blue)', 'var(--c-green)', 'var(--c-purple)', 'var(--c-orange)', 'var(--c-cyan)', 'var(--c-pink)'];
         
         const SHAPES = [
@@ -445,7 +447,8 @@
         document.getElementById('lobby-level-display').innerText = level;
 
         function startGame(m) {
-            mode = m; audioSys.init(); audioSys.stopBGM(); audioSys.playBGM();
+            mode = m; 
+            audioSys.init(); 
             document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
             document.getElementById('game-screen').classList.add('active');
             document.getElementById('xp-wrapper').style.display = (mode==='adventure') ? 'block' : 'none';
@@ -453,37 +456,65 @@
             initBoard();
         }
 
+        function tryGoHome() {
+            if (score === 0 || isGameOver) {
+                goHome();
+            } else {
+                showConfirm("Leave Game?", `Are you sure to leave? (Score: ${score})`, goHome);
+            }
+        }
+
         function goHome() {
-            closeSettings(); audioSys.stopBGM();
+            closeSettings(); 
             document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
             document.getElementById('lobby-screen').classList.add('active');
             document.getElementById('lobby-level-display').innerText = level;
         }
 
         function tryRestart() {
-            if(isGameOver) { performRestart(); } else { showCustomConfirm(); }
+            if (isGameOver || score === 0) {
+                performRestart();
+            } else {
+                showConfirm("Restart Game?", `Score kamu ${score} akan hilang. Yakin?`, performRestart);
+            }
         }
 
-        function showCustomConfirm() {
-            document.getElementById('confirm-text').innerText = `Anda yakin ingin mengulang? Score saat ini: ${score}`;
+        function showConfirm(title, msg, action) {
+            document.querySelector('.confirm-title').innerText = title;
+            document.getElementById('confirm-text').innerText = msg;
             const modal = document.getElementById('confirm-modal');
             modal.classList.add('show');
-            document.getElementById('btn-confirm-yes').onclick = function() {
-                modal.classList.remove('show'); performRestart();
-            };
+            const yesBtn = document.getElementById('btn-confirm-yes');
+            const newYes = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYes, yesBtn);
+            newYes.onclick = function() { modal.classList.remove('show'); action(); };
         }
 
-        function performRestart() {
-            closeSettings(); initBoard(); 
-            if(mode==='adventure'){currentXP=0;updateXP();}
-        }
+        function performRestart() { closeSettings(); initBoard(); if(mode==='adventure'){currentXP=0;updateXP();} }
 
         function initBoard() {
             grid = Array(GRID_SIZE).fill().map(()=>Array(GRID_SIZE).fill(null));
-            score=0; isGameOver=false; updateScoreUI(); renderGrid(); spawnShapes();
+            score=0; isGameOver=false; updateScoreUI();
+            spawnInitialBlocks(); renderGrid(); spawnShapes();
             document.getElementById('dock').classList.remove('unavailable');
             document.getElementById('no-space-overlay').style.display='none'; 
             document.getElementById('game-best').innerText = bestScore;
+        }
+
+        function spawnInitialBlocks() {
+            const count = Math.floor(Math.random() * 5) + 3; 
+            let placedCount = 0; let attempts = 0;
+            while (placedCount < count && attempts < 100) {
+                const r = Math.floor(Math.random() * GRID_SIZE);
+                const c = Math.floor(Math.random() * GRID_SIZE);
+                if (grid[r][c] === null) {
+                    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    grid[r][c] = { color: color, isInitial: true };
+                    placedCount++;
+                }
+                attempts++;
+            }
+            if (placedCount > 0) setTimeout(() => { audioSys.playTone(500, 'sine', 0.3); }, 100);
         }
 
         function renderGrid() {
@@ -493,6 +524,7 @@
                     const d=document.createElement('div'); d.className='cell'; d.dataset.r=r; d.dataset.c=c;
                     if(cell) {
                         const b=document.createElement('div'); b.className='block-element'; b.style.background=cell.color;
+                        if (cell.isInitial) { b.classList.add('appear-anim'); cell.isInitial = false; b.style.animationDelay = (Math.random() * 0.3) + 's'; }
                         d.appendChild(b);
                     }
                     el.appendChild(d);
@@ -528,189 +560,190 @@
             con.appendChild(wp);
         }
 
-        let dragEl, curShape, dragIdx;
-        function startDrag(e, idx) {
-            if(isGameOver) return; e.preventDefault();
-            audioSys.playTone(400, 'sine', 0.1); audioSys.vibrate(20);
-            dragIdx=idx; curShape=dockShapes[idx];
-            dragEl=document.createElement('div'); dragEl.className='draggable-shape';
-            
-            const currentSkin = document.body.className.match(/skin-\w+/);
-            if(currentSkin) dragEl.classList.add(currentSkin[0]);
+        let dragEl = null; let curShape = null; let dragIdx = -1; let dragBlockSize = 0; const FINGER_OFFSET_Y = 80; 
 
-            const rect=document.querySelector('.cell').getBoundingClientRect();
-            const size=rect.width, gap=4;
-            curShape.coords.forEach(c=>{
-                const b=document.createElement('div'); b.className='block-element';
-                b.style.width=size+'px'; b.style.height=size+'px'; b.style.background=curShape.color;
-                b.style.position='absolute'; b.style.top=(c[0]*(size+gap))+'px'; b.style.left=(c[1]*(size+gap))+'px';
+        function startDrag(e, idx) {
+            if (isGameOver) return;
+            e.preventDefault(); audioSys.playTone(400, 'sine', 0.1); audioSys.vibrate(20);
+            dragIdx = idx; curShape = dockShapes[idx];
+            const dockItem = document.getElementById(`dock-${idx}`).querySelector('div'); if(dockItem) dockItem.style.opacity = '0';
+            dragEl = document.createElement('div'); dragEl.className = 'draggable-shape';
+            const currentSkin = document.body.className.match(/skin-\w+/); if(currentSkin) dragEl.classList.add(currentSkin[0]);
+            const rect = document.querySelector('.cell').getBoundingClientRect(); dragBlockSize = rect.width; const gap = 4;
+            let maxCol = 0, maxRow = 0;
+            curShape.coords.forEach(c => {
+                maxCol = Math.max(maxCol, c[1]); maxRow = Math.max(maxRow, c[0]);
+                const b = document.createElement('div'); b.className = 'block-element';
+                b.style.width = dragBlockSize + 'px'; b.style.height = dragBlockSize + 'px';
+                b.style.background = curShape.color; b.style.position = 'absolute';
+                b.style.top = (c[0] * (dragBlockSize + gap)) + 'px'; b.style.left = (c[1] * (dragBlockSize + gap)) + 'px';
                 dragEl.appendChild(b);
             });
-            document.body.appendChild(dragEl);
-            moveDrag(e);
-            document.addEventListener('mousemove',moveDrag); document.addEventListener('touchmove',moveDrag,{passive:false});
-            document.addEventListener('mouseup',endDrag); document.addEventListener('touchend',endDrag);
+            const shapeWidth = (maxCol + 1) * (dragBlockSize + gap); const shapeHeight = (maxRow + 1) * (dragBlockSize + gap);
+            dragEl.dataset.cx = shapeWidth / 2; dragEl.dataset.cy = shapeHeight / 2;
+            document.body.appendChild(dragEl); moveDrag(e);
+            document.addEventListener('mousemove', moveDrag); document.addEventListener('touchmove', moveDrag, { passive: false });
+            document.addEventListener('mouseup', endDrag); document.addEventListener('touchend', endDrag);
         }
+
         function moveDrag(e) {
             if(!dragEl) return; e.preventDefault();
             const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY;
-            dragEl.style.left=(cx-40)+'px'; dragEl.style.top=(cy-100)+'px';
-            highlight(cx,cy-80);
+            const offX = parseFloat(dragEl.dataset.cx); const offY = parseFloat(dragEl.dataset.cy);
+            const visualLeft = cx - offX; const visualTop = cy - FINGER_OFFSET_Y - offY;
+            dragEl.style.left = visualLeft + 'px'; dragEl.style.top = visualTop + 'px';
+            const anchorX = visualLeft + (dragBlockSize / 2); const anchorY = visualTop + (dragBlockSize / 2);
+            highlight(anchorX, anchorY); 
         }
+
         function endDrag(e) {
-            if(!dragEl) return;
-            const cx=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
-            const cy=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
-            const t=getTarget(cx,cy-80);
-            let placed=false;
-            if(t && canPlace(t.r,t.c,curShape)) {
-                placeShape(t.r,t.c,curShape); placed=true;
-                audioSys.playTone(600, 'triangle', 0.1); audioSys.vibrate(40);
-            }
-            dragEl.remove(); dragEl=null;
-            document.removeEventListener('mousemove',moveDrag); document.removeEventListener('touchmove',moveDrag);
-            document.removeEventListener('mouseup',endDrag); document.removeEventListener('touchend',endDrag);
-            document.querySelectorAll('.preview-active').forEach(e=>e.remove());
-            if(placed) {
-                dockShapes[dragIdx]=null; document.getElementById(`dock-${dragIdx}`).innerHTML='';
-                checkLines();
-                if(dockShapes.every(x=>x===null)) setTimeout(spawnShapes,200); else checkGameOver();
+            if (!dragEl) return;
+            const rect = dragEl.getBoundingClientRect(); const anchorX = rect.left + (dragBlockSize / 2); const anchorY = rect.top + (dragBlockSize / 2);
+            const t = getTarget(anchorX, anchorY);
+            let placed = false;
+            if (t && canPlace(t.r, t.c, curShape)) { placeShape(t.r, t.c, curShape); placed = true; audioSys.playTone(600, 'triangle', 0.1); audioSys.vibrate(40); }
+            dragEl.remove(); dragEl = null;
+            document.removeEventListener('mousemove', moveDrag); document.removeEventListener('touchmove', moveDrag);
+            document.removeEventListener('mouseup', endDrag); document.removeEventListener('touchend', endDrag);
+            document.querySelectorAll('.preview-active').forEach(e => e.remove());
+            document.querySelectorAll('.will-clear').forEach(e => e.classList.remove('will-clear'));
+            document.body.classList.remove('clearing-vib');
+            if (placed) {
+                dockShapes[dragIdx] = null; document.getElementById(`dock-${dragIdx}`).innerHTML = '';
+                checkLines(); if (dockShapes.every(x => x === null)) setTimeout(spawnShapes, 200); else checkGameOver();
+            } else {
+                const dockItem = document.getElementById(`dock-${dragIdx}`).querySelector('div'); if(dockItem) { dockItem.style.transition = 'opacity 0.3s'; dockItem.style.opacity = '1'; } audioSys.playTone(100, 'sawtooth', 0.1); 
             }
         }
 
         function getTarget(x,y) {
-            let cl=null, min=60;
+            let cl=null; let min = dragBlockSize * 0.8; 
             document.querySelectorAll('.cell').forEach(c=>{
-                const r=c.getBoundingClientRect(); const d=Math.hypot(x-(r.left+r.width/2),y-(r.top+r.height/2));
-                if(d<min){min=d; cl={r:+c.dataset.r,c:+c.dataset.c};}
+                const r=c.getBoundingClientRect(); const centerX = r.left + r.width/2; const centerY = r.top + r.height/2; const d = Math.hypot(x - centerX, y - centerY);
+                if(d < min){ min=d; cl={r:+c.dataset.r,c:+c.dataset.c}; }
             }); return cl;
         }
+
         function canPlace(r,c,s) {
-            for(let co of s.coords){
-                let nr=r+co[0], nc=c+co[1];
-                if(nr<0||nr>=GRID_SIZE||nc<0||nc>=GRID_SIZE||grid[nr][nc]) return false;
-            } return true;
+            for(let co of s.coords){ let nr=r+co[0], nc=c+co[1]; if(nr<0||nr>=GRID_SIZE||nc<0||nc>=GRID_SIZE||grid[nr][nc]) return false; } return true;
         }
+
         function highlight(x,y) {
-            document.querySelectorAll('.preview-active').forEach(e=>e.remove());
+            document.querySelectorAll('.preview-active').forEach(e=>e.remove()); document.querySelectorAll('.will-clear').forEach(e => e.classList.remove('will-clear'));
             const t=getTarget(x,y); if(!t||!canPlace(t.r,t.c,curShape)) return;
             curShape.coords.forEach(co=>{
                 const c=document.querySelector(`.cell[data-r="${t.r+co[0]}"][data-c="${t.c+co[1]}"]`);
-                const p=document.createElement('div'); p.className='block-element preview-active';
-                p.style.background=curShape.color; c.appendChild(p);
+                if(c) { const p=document.createElement('div'); p.className='block-element preview-active'; p.style.background=curShape.color; c.appendChild(p); }
             });
+            checkPotentialClears(t.r, t.c, curShape);
         }
-        function placeShape(r,c,s) {
-            s.coords.forEach(co=>grid[r+co[0]][c+co[1]]={color:s.color});
-            score+=s.coords.length; updateScoreUI(); renderGrid();
+
+        function checkPotentialClears(r, c, s) {
+            let shapeSet = new Set(); s.coords.forEach(co => { shapeSet.add(`${r + co[0]},${c + co[1]}`); });
+            let rowsToClear = [], colsToClear = [];
+            for (let i = 0; i < GRID_SIZE; i++) { let full = true; for (let j = 0; j < GRID_SIZE; j++) { if (grid[i][j] === null && !shapeSet.has(`${i},${j}`)) { full = false; break; } } if (full) rowsToClear.push(i); }
+            for (let j = 0; j < GRID_SIZE; j++) { let full = true; for (let i = 0; i < GRID_SIZE; i++) { if (grid[i][j] === null && !shapeSet.has(`${i},${j}`)) { full = false; break; } } if (full) colsToClear.push(j); }
+            if (rowsToClear.length > 0 || colsToClear.length > 0) {
+                if(!document.body.classList.contains('clearing-vib')) { audioSys.vibrate(10); document.body.classList.add('clearing-vib'); }
+                rowsToClear.forEach(ri => document.querySelectorAll(`.cell[data-r="${ri}"]`).forEach(el => el.classList.add('will-clear')));
+                colsToClear.forEach(ci => document.querySelectorAll(`.cell[data-c="${ci}"]`).forEach(el => el.classList.add('will-clear')));
+            } else { document.body.classList.remove('clearing-vib'); }
         }
+
+        function placeShape(r,c,s) { s.coords.forEach(co=>grid[r+co[0]][c+co[1]]={color:s.color}); score+=s.coords.length; updateScoreUI(); renderGrid(); }
 
         function checkLines() {
             let rows=[], cols=[];
             for(let r=0; r<GRID_SIZE; r++) if(grid[r].every(x=>x)) rows.push(r);
             for(let c=0; c<GRID_SIZE; c++) { let f=true; for(let r=0; r<GRID_SIZE; r++) if(!grid[r][c]) f=false; if(f) cols.push(c); }
-            
             const lines = rows.length + cols.length;
             if(lines > 0) {
-                audioSys.playTone(800, 'square', 0.2); 
-                audioSys.vibrate(100);
-                if(lines >= 2) {
-                    showPopup(lines >= 4 ? "UNBELIEVABLE!" : (lines === 3 ? "SUPER!" : "COMBO!"));
-                    audioSys.playTone(1200, 'sawtooth', 0.4); 
-                }
+                audioSys.playTone(800, 'square', 0.2); audioSys.vibrate(100);
+                if(lines >= 2) { showPopup(lines >= 4 ? "UNBELIEVABLE!" : (lines === 3 ? "SUPER!" : "COMBO!")); audioSys.playTone(1200, 'sawtooth', 0.4); }
                 checkAchievements('combo', lines);
-
-                if(mode==='adventure') {
-                    currentXP += lines * 20;
-                    if(currentXP >= xpNeeded) { level++; currentXP=0; xpNeeded=level*100; localStorage.setItem('adv_lvl', level); showPopup("LEVEL UP!"); }
-                    updateXP();
-                }
+                if(mode==='adventure') { currentXP += lines * 20; if(currentXP >= xpNeeded) { level++; currentXP=0; xpNeeded=level*100; localStorage.setItem('adv_lvl', level); showPopup("LEVEL UP!"); } updateXP(); }
                 rows.forEach(r=>document.querySelectorAll(`.cell[data-r="${r}"]`).forEach(c=>c.classList.add('clearing')));
                 cols.forEach(c=>document.querySelectorAll(`.cell[data-c="${c}"]`).forEach(c=>c.classList.add('clearing')));
-                setTimeout(()=>{
-                    rows.forEach(r=>grid[r].fill(null)); cols.forEach(c=>{for(let r=0;r<GRID_SIZE;r++) grid[r][c]=null;});
-                    score += lines*20; updateScoreUI(); renderGrid();
-                },300);
+                setTimeout(()=>{ rows.forEach(r=>grid[r].fill(null)); cols.forEach(c=>{for(let r=0;r<GRID_SIZE;r++) grid[r][c]=null;}); score += lines*20; updateScoreUI(); renderGrid(); },300);
             }
         }
 
         function showPopup(text) {
             const el = document.createElement('div'); el.className = 'combo-popup'; el.innerText = text;
-            document.querySelector('.game-wrapper').appendChild(el);
-            setTimeout(()=>el.remove(), 1000);
+            document.querySelector('.game-wrapper').appendChild(el); setTimeout(()=>el.remove(), 1000);
         }
 
         function checkGameOver() {
             const rem=dockShapes.filter(x=>x); if(rem.length===0) return;
-            let ok=false;
-            for(let s of rem) {
-                for(let r=0;r<GRID_SIZE;r++) { for(let c=0;c<GRID_SIZE;c++) if(canPlace(r,c,s)) {ok=true;break;} if(ok)break; }
-                if(ok)break;
-            }
-            if(!ok) {
-                isGameOver=true; 
-                document.getElementById('dock').classList.add('unavailable');
-                document.getElementById('no-space-overlay').style.display = 'flex';
-                audioSys.playTone(150, 'sawtooth', 0.5);
-            }
+            let ok=false; for(let s of rem) { for(let r=0;r<GRID_SIZE;r++) { for(let c=0;c<GRID_SIZE;c++) if(canPlace(r,c,s)) {ok=true;break;} if(ok)break; } if(ok)break; }
+            if(!ok) { isGameOver=true; document.getElementById('dock').classList.add('unavailable'); const overlay = document.getElementById('no-space-overlay'); overlay.style.display = 'flex'; animateValue("final-score-anim", 0, score, 1500); audioSys.playTone(150, 'sawtooth', 0.5); }
+        }
+
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id); let startTimestamp = null;
+            const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerHTML = Math.floor(progress * (end - start) + start); if (progress < 1) window.requestAnimationFrame(step); };
+            window.requestAnimationFrame(step);
         }
 
         function checkAchievements(type, val) {
-            achievements.forEach(a => {
-                if(a.check(val)) {
-                    let unlocked = JSON.parse(localStorage.getItem('ach_unlocked') || '[]');
-                    if(!unlocked.includes(a.id)) {
-                        unlocked.push(a.id);
-                        localStorage.setItem('ach_unlocked', JSON.stringify(unlocked));
-                        showPopup("ACHIEVEMENT!");
-                    }
-                }
-            });
+            achievements.forEach(a => { if(a.check(val)) { let unlocked = JSON.parse(localStorage.getItem('ach_unlocked') || '[]'); if(!unlocked.includes(a.id)) { unlocked.push(a.id); localStorage.setItem('ach_unlocked', JSON.stringify(unlocked)); showPopup("ACHIEVEMENT!"); } } });
         }
         function openAchievements() {
-            const list = document.getElementById('ach-list'); list.innerHTML='';
-            const unlocked = JSON.parse(localStorage.getItem('ach_unlocked') || '[]');
-            achievements.forEach(a => {
-                const isUn = unlocked.includes(a.id);
-                const item = document.createElement('div');
-                item.className = 'ach-item ' + (isUn ? 'unlocked' : '');
-                item.innerHTML = `<div class="ach-icon">${isUn ? '🏆' : '🔒'}</div><div class="ach-info"><div>${a.title}</div><div>${a.desc}</div></div>`;
-                list.appendChild(item);
-            });
+            const list = document.getElementById('ach-list'); list.innerHTML=''; const unlocked = JSON.parse(localStorage.getItem('ach_unlocked') || '[]');
+            achievements.forEach(a => { const isUn = unlocked.includes(a.id); const item = document.createElement('div'); item.className = 'ach-item ' + (isUn ? 'unlocked' : ''); item.innerHTML = `<div class="ach-icon">${isUn ? '🏆' : '🔒'}</div><div class="ach-info"><div>${a.title}</div><div>${a.desc}</div></div>`; list.appendChild(item); });
             document.getElementById('ach-modal').classList.add('show');
         }
 
-        function updateScoreUI() { 
-            document.getElementById('game-score').innerText=score; 
-            if(score>bestScore){bestScore=score;localStorage.setItem('bb_final_best',bestScore);document.getElementById('game-best').innerText=bestScore;}
-            checkAchievements('sc', score);
-        }
-        function updateXP() { 
-            document.getElementById('current-level').innerText=level; 
-            document.getElementById('xp-fill').style.width=(currentXP/xpNeeded*100)+'%'; 
-            document.getElementById('xp-val').innerText=Math.floor(currentXP/xpNeeded*100); 
-            checkAchievements('lv', level);
-        }
+        function updateScoreUI() { document.getElementById('game-score').innerText=score; if(score>bestScore){bestScore=score;localStorage.setItem('bb_final_best',bestScore);document.getElementById('game-best').innerText=bestScore;} checkAchievements('sc', score); }
+        function updateXP() { document.getElementById('current-level').innerText=level; document.getElementById('xp-fill').style.width=(currentXP/xpNeeded*100)+'%'; document.getElementById('xp-val').innerText=Math.floor(currentXP/xpNeeded*100); checkAchievements('lv', level); }
 
         function openSettings(){document.getElementById('settings-modal').classList.add('show');document.getElementById('main-settings-view').style.display='block';document.getElementById('custom-panel').style.display='none';}
         function closeSettings(){document.getElementById('settings-modal').classList.remove('show');}
         function showCustomPanel(){document.getElementById('main-settings-view').style.display='none';document.getElementById('custom-panel').style.display='block';}
         function hideCustomPanel(){document.getElementById('main-settings-view').style.display='block';document.getElementById('custom-panel').style.display='none';}
         
-        function changeBg(color, el) { 
-            // 1. Ganti variabel CSS agar Game Screen berubah
-            document.documentElement.style.setProperty('--default-game-bg', color);
-            // 2. Ganti body
-            document.body.style.background = color;
-            // 3. Ganti lobby juga biar sama
-            document.getElementById('lobby-screen').style.background = color;
-            // 4. Update UI aktif
-            document.querySelectorAll('.bg-color-opt').forEach(b => b.classList.remove('active')); 
-            el.classList.add('active'); 
+        // --- AUTO SAVE & PATTERN FIX ---
+        function changeGameBg(color, el) { 
+            document.documentElement.style.setProperty('--current-game-bg', color);
+            localStorage.setItem('bb_bg_color', color);
+            if (el) { document.querySelectorAll('.bg-color-opt').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+        }
+        function setSkin(skin, el) { 
+            document.body.className = ''; if(skin !== 'classic') document.body.classList.add('skin-' + skin);
+            localStorage.setItem('bb_skin', skin);
+            if (el) { document.querySelectorAll('.skin-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+        }
+        
+        // FIX: ONLY update GAME background, NOT Lobby
+        function setPattern(pat, el) {
+            const gameBg = document.getElementById('bg-pattern-game');
+            if(gameBg) {
+                gameBg.className = 'scrolling-bg ' + pat;
+            }
+            
+            localStorage.setItem('bb_pattern', pat);
+            if (el) { document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
         }
 
-        function setSkin(skin, el) { document.body.className = ''; if(skin !== 'classic') document.body.classList.add('skin-' + skin); document.querySelectorAll('.skin-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+        // LOAD PREFS
+        function loadUserPreferences() {
+            const savedBg = localStorage.getItem('bb_bg_color');
+            if(savedBg) { document.documentElement.style.setProperty('--current-game-bg', savedBg); document.querySelectorAll('.bg-color-opt').forEach(b => { b.classList.remove('active'); if(b.getAttribute('style').includes(savedBg)) b.classList.add('active'); }); }
+            const savedSkin = localStorage.getItem('bb_skin');
+            if(savedSkin) { document.body.className = ''; if(savedSkin !== 'classic') document.body.classList.add('skin-' + savedSkin); document.querySelectorAll('.skin-btn').forEach(b => { b.classList.remove('active'); if(b.innerText.toLowerCase() === savedSkin) b.classList.add('active'); }); }
+            
+            // Default Pattern is Grid
+            let savedPattern = localStorage.getItem('bb_pattern');
+            if(!savedPattern) savedPattern = 'pat-grid'; 
+            
+            // Apply loaded pattern to GAME ONLY
+            const gameBg = document.getElementById('bg-pattern-game');
+            if(gameBg) gameBg.className = 'scrolling-bg ' + savedPattern;
 
+            document.querySelectorAll('.pat-btn').forEach(b => { b.classList.remove('active'); if(b.classList.contains(savedPattern)) b.classList.add('active'); });
+        }
+
+        loadUserPreferences();
         document.getElementById('game-best').innerText = bestScore;
     </script>
 </body>
